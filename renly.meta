@@ -1,0 +1,67 @@
+main = *cmd ?eof     .'   halt' .nl;
+
+cmd = (fun | let | expr) '.';
+
+fun = 'fun'          %gensym
+                     .'   goto SKIP' .top .nl
+      ?id            .it .nl
+      parameters
+      '=' expr       .'   return' .nl
+                     .'SKIP' .pop .nl;
+
+let = 'let' ?id      %it
+      '=' expr       .'   define ' .pop .nl;
+
+expr = e0;
+
+e0 = e1 ( ';'        .'   drop' .nl
+          e0
+        | '' );
+
+e1 = e2 *( ':>' ?id  .'   to ' .it .nl);
+
+e2 = e3 *( '&' e3    .'   and' .nl
+         | '|' e3    .'   or'  .nl
+         | '^' e3    .'   xor' .nl);
+
+e3 = e4 ( '<' e4     .'   lt' .nl
+        | '=' e4     .'   eq' .nl
+        | '' );
+
+e4 = e5 *( '+' e5    .'   add' .nl
+         | '-' e5    .'   sub' .nl);
+
+e5 = e6 *( '*' e6    .'   mul' .nl
+         | '/' e6    .'   div' .nl
+         | '%' e6    .'   mod' .nl);
+
+e6 = ?decimal        .'   push ' .it .nl
+   | ?qstring        .'   push_string ' .it .nl
+   | 'if' e1         %gensym
+                     .'   if-false F' .top .nl
+     'then' e1       %gensym
+                     .'   goto E' .top .nl
+                     %swap
+                     .'F' .pop .nl
+     'else' e1
+                     .'E' .pop .nl
+   | '*' e6          .'   fetch' .nl
+   | '-' e6          .'   neg' .nl
+   | '(' e0 ')'
+   | ?id %it
+     ( arguments     .'   call ' .pop .nl
+     | ''            .'   load ' .pop .nl);
+
+parameters =
+   '('               .'   parameters'
+      ( ?id          .' ' .it
+         *(',' ?id   .' ' .it
+          )
+         | '')
+   ')'               .nl;
+
+arguments =
+   '(' ( e1
+         *(',' e1)
+         | '')
+   ')';
