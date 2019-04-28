@@ -1,0 +1,74 @@
+read string
+    self.match(re.escape(string))
+
+read_eof
+    self.feed = self.feed.lstrip()
+    self.win = self.feed == ''
+
+read_id
+    self.match(r'[a-zA-Z_]\w*')
+
+read_qstring
+    self.match(r"'[^']*'")
+
+read_decimal
+    self.match(r'\d+')
+
+goto addr
+    self.pc = addr
+
+if_win addr
+    if self.win:
+        self.pc = addr
+
+win_loop addr
+    if self.win:
+        self.pc = addr
+    self.win = True
+
+if_lose addr
+    if not self.win:
+        self.pc = addr
+
+win_or_die
+    if not self.win:
+        self.poisoned = True
+
+call addr
+    self.calls.extend((self.pc, self.labels[arg]))   # N.B. arg is implicit
+    self.pc = addr
+
+return
+    self.pc = self.calls[-2]
+    del self.calls[-2:]
+
+write string
+    self.write(string)
+
+write_q
+    self.write("'")
+
+write_nl
+    self.write('\n')
+
+write_it
+    self.write(self.bite)
+
+write_top
+    self.write(str(self.stack[-1]))
+
+write_pop
+    self.write(str(self.stack.pop()))
+
+do_gensym
+    self.stack.append(self.gensym())
+    self.win = True
+
+do_it
+    self.stack.append(self.bite)
+    self.win = True
+
+do_swap
+    y, z = self.stack[-2:]
+    self.stack[-2:] = [z, y]
+    self.win = True
