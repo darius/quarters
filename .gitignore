@@ -4,6 +4,10 @@
 # Generated files
 meta.obj
 opdefs.py
+infix.asm
+infix.obj
+renly.asm
+renly.obj
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
